@@ -22,25 +22,21 @@ namespace VerificationCode
         {
             try
             {
-                var pointList = GetRequestCode(context);
-                if (pointList?.Any() != true)
+                var result = new List<CodePoint>();
+                var valueProvider = CompositeValueProvider.CreateAsync(((ControllerBase)context.Controller).ControllerContext).Result;
+                var code = valueProvider.GetValue(Field).ToString();
+                if (string.IsNullOrEmpty(code))
                 {
                     context.ModelState.TryAddModelError(Field, "验证码为空");
                 }
                 else
                 {
-                    var checkCode = JsonConvert.DeserializeObject<List<CodePoint>>(context.HttpContext.Session.GetString(VerificationCodeFactory.Option.SessionKey));
-                    if (pointList.Any() && checkCode.Any() && pointList.Count == checkCode.Count)
+                    var provider = VerificationCodeFactory.GetProvider();
+                    var pointList = provider.Decode(code);
+                    var checkCode = provider.Decode(context.HttpContext.Session.GetString(VerificationCodeFactory.Option.SessionKey) ?? String.Empty);
+                    if (checkCode?.Compare(pointList) != true)
                     {
-                        var list = checkCode.OrderBy(o => o.Sort).ToList();
-                        for (int i = 0; i < list.Count; i++)
-                        {
-                            if (!list[i].Compare(pointList[i]))
-                            {
-                                context.ModelState.TryAddModelError(Field, "验证失败");
-                                break;
-                            }
-                        }
+                        context.ModelState.TryAddModelError(Field, "验证失败");
                     }
                 }
             }
@@ -50,27 +46,6 @@ namespace VerificationCode
             }
 
             return next();
-        }
-
-        private List<CodePoint> GetRequestCode(ActionExecutingContext context)
-        {
-            var result = new List<CodePoint>();
-            var valueProvider = CompositeValueProvider.CreateAsync(((ControllerBase)context.Controller).ControllerContext).Result;
-            if (valueProvider.ContainsPrefix(Field))
-            {
-                var codeValues = valueProvider.GetKeysFromPrefix(Field);
-                foreach (var item in codeValues)
-                {
-                    var xStr = valueProvider.GetValue(item.Value + ".X");
-                    var yStr = valueProvider.GetValue(item.Value + ".Y");
-                    int x = 0; int y = 0;
-                    if (int.TryParse(xStr.FirstValue, out x) && int.TryParse(yStr.FirstValue, out y))
-                    {
-                        result.Add(new CodePoint { X = x, Y = y });
-                    }
-                }
-            }
-            return result;
         }
     }
 }

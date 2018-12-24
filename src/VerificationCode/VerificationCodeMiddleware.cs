@@ -19,13 +19,13 @@ namespace VerificationCode
 
         public Task Invoke(HttpContext context)
         {
-            if (context.Request.Headers["VerificationCode"] == "true" && context.Request.Path.HasValue)
+            if (context.Request.Path.HasValue)
             {
-                if (context.Request.Path.Value == "/VerificationCodeImage")
+                if (context.Request.Path.Value == VerificationCodeFactory.Option.CodeImageUrl)
                 {
                     return GetVerificationCodeImage(context);
                 }
-                if (context.Request.Path.Value == "/CheckVerificationCode")
+                if (context.Request.Path.Value == VerificationCodeFactory.Option.CheckCodeUrl)
                 {
                     return CheckCode(context);
                 }
@@ -37,10 +37,11 @@ namespace VerificationCode
 
         private Task GetVerificationCodeImage(HttpContext context)
         {
-            var model = VerificationCodeFactory.CreateVerificationImage();
-            string msg = string.Format(VerificationCodeFactory.Option.MessageTipFormat, string.Join(" ", model.Point.Select(x => x.Word).ToList()));
-            var content = JsonConvert.SerializeObject(new { Result = model.ImageBase64Str, Message = msg, Count = model.Point.Count });
-            context.Session.SetString(VerificationCodeFactory.Option.SessionKey, JsonConvert.SerializeObject(model.Point));
+            var provider = VerificationCodeFactory.GetProvider();
+            var model = provider.CreateImage();
+            string msg = string.Format(VerificationCodeFactory.Option.MessageTipFormat, string.Join(" ", model.GetWord()));
+            var content = JsonConvert.SerializeObject(new { Result = model.ImageBase64String, Message = msg, Count = model.GetWord().Count });
+            context.Session.SetString(VerificationCodeFactory.Option.SessionKey, provider.Encode(model));
             context.Response.ContentType = "application/json";
             return context.Response.WriteAsync(content);
         }
@@ -52,19 +53,12 @@ namespace VerificationCode
             bool status = false;
             try
             {
-                var pointList = JsonConvert.DeserializeObject<List<CodePoint>>(code);
-                var checkCode = JsonConvert.DeserializeObject<List<CodePoint>>(context.Session.GetString(VerificationCodeFactory.Option.SessionKey) ?? String.Empty);
-                if (pointList.Any() && checkCode.Any() && pointList.Count == checkCode.Count)
+                var provider = VerificationCodeFactory.GetProvider();
+                var pointList = provider.Decode(code);
+                var checkCode = provider.Decode(context.Session.GetString(VerificationCodeFactory.Option.SessionKey) ?? String.Empty);
+                if (pointList != null && checkCode != null)
                 {
-                    bool checkResult = true;
-                    var list = checkCode.OrderBy(o => o.Sort).ToList();
-                    for (int i = 0; i < list.Count; i++)
-                    {
-                        if (!list[i].Compare(pointList[i]))
-                        {
-                            checkResult = false;
-                        }
-                    }
+                    bool checkResult = pointList.Compare(checkCode);
                     if (checkResult)
                     {
                         status = true;

@@ -127,9 +127,6 @@
                 $.ajax({
                     url: "/VerificationCodeImage",
                     type: "get",
-                    headers: {
-                        "VerificationCode": "true"
-                    },
                     success: function (data) {
                         var html = "<div id=\"imagediv\" style='position: absolute;left:10px; top:30px;background: #fff;z-index:300'><img src=" + data.Result + " alt=\"看不清？点击更换\" id=\"image\"/></div>";
                         html += "<div id='divrefresh' style='width:20px;height:20px;position:absolute;cursor: pointer;margin-left: 90%;'> <img src=\"/images/shaxin.jpg\" /> </div>";
@@ -148,12 +145,9 @@
 
                 $.ajax({
                     "url": "/CheckVerificationCode",
-                    "headers": {
-                        "VerificationCode": "true"
-                    },
                     "type": "post",
                     "data": {
-                        "code": JSON.stringify(checkCode)
+                        "code": JSON.stringify({ CodeList: checkCode })
                     },
                     "success": function (d) {
                         if (d.Status == true) {
@@ -224,9 +218,9 @@
                     "data": {
                         "userName": $("#userName").val(),
                         "passWord": $("#passWord").val(),
-                        "Code": checkCode
+                        "Code": JSON.stringify({ CodeList: checkCode })
                     },
-                    "success": function (d) {                       
+                    "success": function (d) {
                         alert(d.msg);
                     }
                 })

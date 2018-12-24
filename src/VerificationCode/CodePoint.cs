@@ -10,8 +10,6 @@ namespace VerificationCode
 
         public int Y { get; set; }
 
-        public int Sort { get; set; }
-
         public string Word { get; set; }
 
         public bool Compare(CodePoint point)
