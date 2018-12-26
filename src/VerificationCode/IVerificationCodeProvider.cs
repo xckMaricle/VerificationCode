@@ -15,6 +15,7 @@ namespace VerificationCode
         string Encode(ICodeModel code);
 
         ICodeModel Decode(string code);
+        bool CanHandle(object objectType);
     }
 
     public class DefaultVerificationCodeProvider : IVerificationCodeProvider
@@ -47,6 +48,11 @@ namespace VerificationCode
         {
             if (string.IsNullOrEmpty(code)) { return null; }
             return JsonConvert.DeserializeObject<DefaultCodeModel>(code);
+        }
+
+        public bool CanHandle(object objectType)
+        {
+            return true;
         }
     }
 }

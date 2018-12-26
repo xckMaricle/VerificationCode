@@ -9,7 +9,7 @@ namespace VerificationCode
     {
         string ImageBase64String { get; set; }
 
-        bool Compare(ICodeModel codeList);
+        bool Compare(ICodeModel codeModel);
 
         List<string> GetWord();
     }
@@ -17,7 +17,6 @@ namespace VerificationCode
     public class DefaultCodeModel : ICodeModel
     {
         public string ImageBase64String { get; set; }
-        public string TipWord { get; set; }
         public List<CodePoint> CodeList { get; set; } = new List<CodePoint>();
 
         public bool Compare(ICodeModel codeModel)

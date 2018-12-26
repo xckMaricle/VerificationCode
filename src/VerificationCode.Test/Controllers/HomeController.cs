@@ -33,5 +33,17 @@ namespace VerificationCode.Test.Controllers
             }
             return Json(new { msg = ModelState.Where(w => w.Value.Errors.Any() == true).FirstOrDefault().Value.Errors.FirstOrDefault()?.ErrorMessage, status = "error" });
         }
+
+
+        public IActionResult GetCodeImage()
+        {
+            var codeProvider = VerificationCodeFactory.GetProvider("text", op =>
+              {
+                  op.ImageWidth = 100;
+                  op.ImageHeight = 41;
+              });
+            var model = codeProvider.CreateImage();
+            return Content(model.ImageBase64String);
+        }
     }
 }

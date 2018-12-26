@@ -97,6 +97,9 @@
         <dd class="pwd_icon">
             <input type="password" id="passWord" placeholder="密码" class="login_txtbx" />
         </dd>
+        <dd>
+            <input type="text" name="TestCode" placeholder="请输入验证码"  class="login_txtbx" style="width:50%" />  <img src="#" alt="看不清？点击更换" id="testCode" onclick="getTextCodeImage()"/>
+        </dd>
         <dd class="val_icon">
             <div id="box" onselectstart="return false;">
                 <div class="bgColor"></div>
@@ -118,11 +121,20 @@
     </dl>
 
     <script type="text/javascript">
+        function getTextCodeImage() {
+                $.ajax({
+                    url: "@Url.Action("GetCodeImage")",
+                    type: "get",
+                    success: function (data) {
+                        $("#testCode").attr("src", data);
+                    }
+                })
+         }
         $(document).ready(function () {
             var checkCode = [];
             var checkCount = 2;
             var num = 1;
-
+            getTextCodeImage();
             function getCodeImage() {
                 $.ajax({
                     url: "/VerificationCodeImage",
