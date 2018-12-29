@@ -98,20 +98,9 @@
             <input type="password" id="passWord" placeholder="密码" class="login_txtbx" />
         </dd>
         <dd>
-            <input type="text" name="TestCode" placeholder="请输入验证码"  class="login_txtbx" style="width:50%" />  <img src="#" alt="看不清？点击更换" id="testCode" onclick="getTextCodeImage()"/>
+            <input type="text" name="TestCode" placeholder="请输入验证码" class="login_txtbx" style="width:50%" />  <img src="#" alt="看不清？点击更换" id="testCode" onclick="getTextCodeImage()" />
         </dd>
-        <dd class="val_icon">
-            <div id="box" onselectstart="return false;">
-                <div class="bgColor"></div>
-                <div class="txt" id="labelTip">拖动滑块验证</div>
-                <!--给i标签添加上相应字体图标的类名即可-->
-                <div class="slider"><i class="iconfont icon-double-right">>></i></div>
-            </div>
-            <div id="huadongImage" style="width:300px; border:1px solid #ccc;
-                height:250px; z-index:200; display:none; position: absolute;
-                background-color: white;
-                top:40px;">
-            </div>
+        <dd class="val_icon" id="VerificationCode">
         </dd>
         <dd>
             <input type="button" value="立即登陆" class="submit_btn" />
@@ -135,88 +124,16 @@
             var checkCount = 2;
             var num = 1;
             getTextCodeImage();
-            function getCodeImage() {
-                $.ajax({
-                    url: "/VerificationCodeImage",
-                    type: "get",
-                    success: function (data) {
-                        var html = "<div id=\"imagediv\" style='position: absolute;left:10px; top:30px;background: #fff;z-index:300'><img src=" + data.Result + " alt=\"看不清？点击更换\" id=\"image\"/></div>";
-                        html += "<div id='divrefresh' style='width:20px;height:20px;position:absolute;cursor: pointer;margin-left: 90%;'> <img src=\"/images/shaxin.jpg\" /> </div>";
-                        $("#huadongImage").css("display", "block").html(html);
-                        $("#labelTip").html(data.Message);
-                        checkCount = data.Count;
-                        num = 1;
-                        checkCode = [];
-                        imageClick();
-                        divrefreshClick();
-                    }
-                })
-            }
+            function test(arr) {
+                debugger;
 
-            function checkVerificationCode() {
-
-                $.ajax({
-                    "url": "/CheckVerificationCode",
-                    "type": "post",
-                    "data": {
-                        "code": JSON.stringify({ CodeList: checkCode })
-                    },
-                    "success": function (d) {
-                        if (d.Status == true) {
-                            $("#labelTip").html(d.Message);
-                            $("#huadongImage").hide();
-                        } else {
-                            getCodeImage();
-                        }
-                    },
-                    "error": function (error) {
-
-                    }
-                })
-
-            }
-
-            function pointClick(obj) {
-                num = 1;
-                checkCode = [];
-                $(obj).parent().find('.point-area').remove();
-            }
-
-            function divrefreshClick() {
-                $("#divrefresh").click(function () {
-                    getCodeImage();
-                    num = 1;
-                    checkCode = [];
-                })
-            }
-
-            function getMousePos(obj, event) {
-                var e = event || window.event;
-                var x = e.clientX - ($(obj).offset().left - $(window).scrollLeft());
-                var y = e.clientY - ($(obj).offset().top - $(window).scrollTop());
-                checkCode.push({ "X": parseInt(x), "Y": parseInt(y) });
-                return { 'x': parseInt(x), 'y': parseInt(y) };
-            }
-
-            function imageClick() {
-                $("#imagediv").click(function () {
-                    var _this = $(this);
-                    var pos = getMousePos(_this);
-                    createPoint(pos);
-                })
-            }
-
-            function createPoint(pos) {
-                if (num == checkCount) {
-                    checkVerificationCode();
-                }
-
-                $("#imagediv").append('<div class="point-area" onclick="pointClick(this)" style="background-color:#539ffe;color:#fff;z-index:9999;width:25px;height:25px;text-align:center;line-height:25px;border-radius: 20%;position:absolute;border:2px solid white;top:' + parseInt(pos.y - 10) + 'px;left:' + parseInt(pos.x - 10) + 'px;">' + num + '</div>');
-                ++num;
-            }
+             }
 
             $.Slider({
-                successCallback: getCodeImage
+                getCodeUrl:'/VerificationCodeImage',
+                checkCodeUrl:'/CheckVerificationCode',
+                containerSelector:"#VerificationCode",
+                successCallback: test
             });
 
             $(".submit_btn").click(function () {

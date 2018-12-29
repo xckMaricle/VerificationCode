@@ -14,9 +14,108 @@
                 slider: ".slider",
                 icon: ".slider>i",
                 successText: "验证通过",
-                successCallback: function () { }
+                width: "300px",
+                height: "250px",
+                checkCode: [],
+                checkCount: 0,
+                selectCount: 0,
+                getCodeUrl: '',
+                checkCodeUrl: '',
+                containerSelector: '',
+                successCallback: function (codeList) { }
             };
             $.extend(defaultConfig, option)
+            
+            if (!defaultConfig.getCodeUrl || !defaultConfig.checkCodeUrl || !defaultConfig.containerSelector) {
+                throw new Error("getCodeUrl,checkCodeUrl,containerSelector 不能为空");
+            }
+            $(defaultConfig.containerSelector).html('');
+            $(defaultConfig.containerSelector).append('<div id="box" onselectstart="return false;"><div class="bgColor"></div><div class="txt" id="labelTip">拖动滑块验证</div><div class="slider"><i class="iconfont icon-double-right">>></i></div></div>');
+            $(defaultConfig.containerSelector).append('<div id="huadongImage" style="width:' + defaultConfig.width + '; border:1px solid #ccc;height:' + defaultConfig.height +'; z-index:200; display:none; position: absolute;background-color: white;top:40px;"></div>');
+            function pointClick(obj) {
+                //
+            }
+
+
+
+            function checkVerificationCode() {
+
+                $.ajax({
+                    "url": defaultConfig.checkCodeUrl,
+                    "type": "post",
+                    "data": {
+                        "code": JSON.stringify({ CodeList: defaultConfig.checkCode })
+                    },
+                    "success": function (d) {
+                        if (d.Status == true) {
+                            $(defaultConfig.containerSelector).find("#labelTip").html(d.Message);
+                            $(defaultConfig.containerSelector).find("#huadongImage").hide();
+                            defaultConfig.successCallback(defaultConfig.checkCode);
+                        } else {
+                            getCodeImage();
+                        }
+                    },
+                    "error": function (error) {
+
+                    }
+                })
+
+            }
+
+            function createPoint(pos) {
+                if (defaultConfig.selectCount == defaultConfig.checkCount && defaultConfig.checkCodeUrl) {
+                    checkVerificationCode();
+                    return;
+                }
+                $(defaultConfig.containerSelector).find("#imagediv").append('<div class="point-area" onclick="pointClick(this)" style="background-color:#539ffe;color:#fff;z-index:9999;width:25px;height:25px;text-align:center;line-height:25px;border-radius: 20%;position:absolute;border:2px solid white;top:' + parseInt(pos.y - 10) + 'px;left:' + parseInt(pos.x - 10) + 'px;">' + defaultConfig.selectCount + '</div>');
+                defaultConfig.selectCount += 1;
+            }
+
+            function getMousePos(obj, event) {
+                var e = event || window.event;
+                var x = e.clientX - ($(obj).offset().left - $(window).scrollLeft());
+                var y = e.clientY - ($(obj).offset().top - $(window).scrollTop());
+                defaultConfig.checkCode.push({ "X": parseInt(x), "Y": parseInt(y) });
+                return { 'x': parseInt(x), 'y': parseInt(y) };
+            }
+
+            function imageClick() {
+                $(defaultConfig.containerSelector).find("#imagediv").click(function () {
+                    var _this = $(this);
+                    var pos = getMousePos(_this);
+                    createPoint(pos);
+                })
+            }
+
+            function divrefreshClick() {
+                $(defaultConfig.containerSelector).find("#divrefresh").click(function () {
+                    getCodeImage();
+                    defaultConfig.selectCount = 1;
+                    defaultConfig.checkCode = [];
+                })
+            }
+
+            function getCodeImage() {
+                $.ajax({
+                    url: defaultConfig.getCodeUrl,
+                    type: "get",
+                    success: function (data) {
+                        var html = "<div id=\"imagediv\" style='position: absolute;left:10px; top:30px;background: #fff;z-index:300'><img src=" + data.Result + " alt=\"看不清？点击更换\" id=\"image\"/></div>";
+                        html += "<div id='divrefresh' style='width:20px;height:20px;position:absolute;cursor: pointer;margin-left: 90%;'> <img src=\"/images/shaxin.jpg\" /> </div>";
+                        $(defaultConfig.containerSelector).find("#huadongImage").css("display", "block").html(html);
+                        $(defaultConfig.containerSelector).find("#labelTip").html(data.Message);
+                        defaultConfig.checkCount = data.Count;
+                        defaultConfig.selectCount = 1;
+                        defaultConfig.checkCode = [];
+                        imageClick();
+                        divrefreshClick();
+                    }
+                })
+            }
+
+
+
+
             //二、获取到需要用到的DOM元素
             var box = $(defaultConfig.box)[0],//容器
                 bgColor = $(defaultConfig.bgColor)[0],//背景色
@@ -88,7 +187,7 @@
                 //滑动成功时，移除鼠标按下事件和鼠标移动事件
                 slider.onmousedown = null;
                 document.onmousemove = null;
-                defaultConfig.successCallback();
+                getCodeImage();
             };
         }
     });
