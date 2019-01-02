@@ -2,7 +2,7 @@
 简单的验证码生成，校验
 
 ## Quick Start
-### 1. Install-Package VerificationCode -Version 1.0.1
+### 1. Install-Package VerificationCode -Version 1.2.0
 ### 2. 添加session支持
 ```csharp
    public void ConfigureServices(IServiceCollection services)
